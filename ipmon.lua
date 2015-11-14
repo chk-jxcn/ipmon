@@ -4,7 +4,7 @@ local os = require "os"
 local table = require "table"
 
 
-monitorips =
+local monitorips = monitorips or 
 {
 	{ 	"168.0.180.101" ,
 		match = {
@@ -26,17 +26,17 @@ monitorips =
 
 
 -- hepler functions
-function log(s)
+local function log(s)
 	os.execute("logger -t ipmon.lua " .. s)
 end
 
-function exec(cmd)
+local function exec(cmd)
 	local f = io.popen(cmd .. " 2>&1")
 	log("execute " .. cmd)
 	log("ret: " .. f:read"*a")
 end
 
-function subnet(ip, masklen)
+local function subnet(ip, masklen)
 	if masklen == 32 then return ip end
 	local ip = {string.match(ip, "(%d+).(%d+).(%d+).(%d+)")}
 	local pos = math.floor((masklen)/8) + 1
@@ -48,12 +48,12 @@ function subnet(ip, masklen)
 end
 
 -- functions operate route
-function flushrt(ip, ipargs)
+local function flushrt(ip, ipargs)
 	-- ip route flush table tableid
 	exec("ip route flush table " .. ipargs.tableid)
 end
 
-function addrt(ip, ipargs)
+local function addrt(ip, ipargs)
 	-- ip route add ip/masklen dev interface table tableid
 	-- ip route add default via gateway dev interface table tableid
 	ipargs.ip = ip
@@ -63,7 +63,7 @@ function addrt(ip, ipargs)
 	end
 end
 
-function delrule(ip, ipargs)
+local function delrule(ip, ipargs)
 	-- ip rule del pref ?
 	local f = io.popen"ip rule"
 	local cmds = {}
@@ -84,7 +84,7 @@ function delrule(ip, ipargs)
 	end
 end
 
-function addrule(ip, ipargs) 
+local function addrule(ip, ipargs) 
 	-- ip rule add from ip lookup tableid
 	exec("ip rule add from " .. ip .. " lookup " .. ipargs.tableid)
 end
@@ -97,7 +97,7 @@ end
 -- 	masklen = ?
 -- 	tableid = ?
 -- }
-function matchip(monitorips, event)
+local function matchip(monitorips, event)
 	local pat=[[([^%s]*)%s*%d+:%s+([^%s]+)%s+inet%s+([%d.]+)/(%d+)]]	
 	-- Deleted 2: eth0    inet 192.168.22.2/24 brd 192.168.22.255 scope global eth0:2
 	-- ^del	      ^interface   ^ip		^masklen
@@ -127,7 +127,7 @@ function matchip(monitorips, event)
 	return true, ip, ipargs
 end
 
-function run(config)
+function runipmon(config)
 	if not config then config = monitorips end
 	local f = io.popen"ip monitor addr"
 	for event in f:lines() do
@@ -150,4 +150,4 @@ function run(config)
 end
 
 
--- run()
+runipmon()
