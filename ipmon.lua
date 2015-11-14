@@ -9,7 +9,15 @@ monitorips =
 	{ 	"168.0.180.101" ,
 		match = {
 			interface = "eth0",
-			masklen = 16,
+			--masklen = 16,
+			},
+		gateway = "168.0.0.254",
+		-- tableid = 10, "never set it!"
+	},
+	{ 	"168.0.180.100" ,
+		match = {
+			--interface = "eth0",
+			--masklen = 16,
 			},
 		gateway = "168.0.0.254",
 		-- tableid = 10, "never set it!"
@@ -102,9 +110,14 @@ function matchip(monitorips, event)
 		end
 	end
 	if not hit then return false end
-	if monitorips[hit].interface and monitorips[hit].interface ~= interface then return false end
-	if monitorips[hit].masklen and monitorips[hit].masklen ~= masklen then return false end
-
+	if monitorips[hit].match then
+		if monitorips[hit].match.interface and monitorips[hit].match.interface ~= interface then 
+			return false 
+		end
+		if monitorips[hit].match.masklen and monitorips[hit].match.masklen ~= masklen then 
+			return false 
+		end
+	end
 	ipargs.action = del == "" and "ADD" or "DEL"
 	ipargs.interface = interface
 	ipargs.masklen = masklen
@@ -122,13 +135,13 @@ function run(config)
 			ret, ip, ipargs = matchip(config, event)
 			if not ret then break end 
 			if ipargs.action == "ADD" then
-				log("ADD IP: " .. ip)
+				log("ADD IP: " .. ip .. " on " .. ipargs.interface)
 				delrule(ip, ipargs)
 				flushrt(ip, ipargs)
 				addrt(ip, ipargs)
 				addrule(ip, ipargs)
 			elseif ipargs.action == "DEL" then
-				log("DEL IP: " .. ip)
+				log("DEL IP: " .. ip .. " on " .. ipargs.interface)
 				delrule(ip, ipargs)
 				flushrt(ip, ipargs)
 			end
@@ -137,4 +150,4 @@ function run(config)
 end
 
 
-run()
+-- run()
